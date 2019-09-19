@@ -17,6 +17,7 @@
 需要管理员权限运行  
 下载地址 : https://github.com/flowercodec/Win10WubiShiftPatch/releases  
 开源代码 : https://github.com/flowercodec/Win10WubiShiftPatch  
+注：只有md5匹配时，才会打patch  
 
 FAQ  
 1.如何恢复shift切换功能？  
@@ -24,3 +25,6 @@ FAQ
 
 2.打了patch后，shfit禁了，怎么切换中英文?  
 Ctrl + 空格，反正我是从来没习惯用 shift 切换。  
+
+3.需要支持其它“型号”的ChsIME.exe怎么办？  
+联系作者 QQ: 320581388，肯定是免费的，但是也要看作者是否有时间，作者没有义务24小时内处理，毕竟MS好几年都不修改。
