@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include <algorithm>
+
 static int run_as_daemon  = 0;
 
 #ifdef HAVE_TERMIOS_H
@@ -122,4 +124,30 @@ bool set_debug_privilege()
 	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
 	return AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL );
+}
+
+
+std::string get_system_winodws_path()
+{
+	std::string ret = "C:\\";
+	char str[MAX_PATH];       
+	if (GetWindowsDirectoryA(str, MAX_PATH) > 0) {
+		ret = str;
+		ret += "\\";
+	}
+	return ret;
+}
+
+std::wstring lower_case(const std::wstring& text)
+{
+	std::wstring ret = text;
+	std::transform(ret.begin(), ret.end(), ret.begin(), tolower);
+	return ret;
+}
+
+std::string lower_case(const std::string& text)
+{
+	std::string ret = text;
+	std::transform(ret.begin(), ret.end(), ret.begin(), tolower);
+	return ret;
 }

@@ -7,25 +7,18 @@
 #include <string>
 #include <thread>
 #include <chrono>  
-#include <algorithm>
 
 #include <Windows.h>
 #include <TlHelp32.h>
 
 #include "utils.h"
+#include "md5.h"
 
 using namespace std;
 
 static void sys_sleep(uint32_t nMilliseconds)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(nMilliseconds));
-}
-
-static std::wstring LowerCase(const std::wstring& text)
-{
-	std::wstring ret = text;
-	std::transform(ret.begin(), ret.end(), ret.begin(), tolower);
-	return ret;
 }
 
 static uint64_t GetDLLBaseAddress(std::wstring needDllName, int32_t pid)
@@ -45,8 +38,8 @@ static uint64_t GetDLLBaseAddress(std::wstring needDllName, int32_t pid)
 	int loaded_count = 0;
 	while (bMore) {
 		std::wstring dll_name = module.szModule;
-		dll_name = LowerCase(dll_name);
-		needDllName = LowerCase(needDllName);
+		dll_name = lower_case(dll_name);
+		needDllName = lower_case(needDllName);
 		if (dll_name == needDllName) {
 			ret = (uint64_t)module.modBaseAddr;
 			break;
@@ -74,11 +67,11 @@ static std::vector<DWORD> GetPidByProcessName(wstring process_name)
 	if (!::Process32FirstW(hSnapshot, &lppe))
 		return ret;
 
-	process_name = LowerCase(process_name);
+	process_name = lower_case(process_name);
 
 	do { 
 		wstring exeName = lppe.szExeFile;
-		exeName = LowerCase(exeName);
+		exeName = lower_case(exeName);
 		if(exeName == process_name) { 
 			ret.push_back(lppe.th32ProcessID);
 		}   
@@ -120,7 +113,7 @@ protected:
 		uint32_t count = 0;
 		while (!_exit) {
 
-			sys_sleep(5000);
+			sys_sleep(2500);
 
 			std::vector<DWORD> pids = GetPidByProcessName(s_target_process_name);
 			for (auto pid : pids) {
@@ -133,7 +126,7 @@ protected:
 					} else {
 						s_bok = "failed";
 					}
-					printf("---- do patch, pid = %d, times = %d, result = %s\n", pid, count, s_bok.c_str());
+					printf("-- do patch, pid = %d, times = %d, result = %s\n", pid, count, s_bok.c_str());
 				}
 			}
 		}
@@ -178,8 +171,37 @@ private:
 	std::thread _thread;
 };
 
+bool check_support_version()
+{
+	std::string chs_ime_path = get_system_winodws_path();
+	chs_ime_path += "System32\\InputMethod\\CHS\\ChsIME.exe";
+	bool bSupport = false;
+	do 
+	{
+		std::string file_md5 = md5file(chs_ime_path.c_str());
+		if (file_md5.empty()) {
+			break;
+		}
+
+		file_md5 = lower_case(file_md5);
+		if (file_md5 == "b3448bf077665f2e1ca67094bcf2a7c5") {
+			bSupport = true;
+		}
+
+	} while (0);
+	return bSupport;
+}
+
 int main()
 {
+	printf("---Widows 10 Disable English Switch Key(Shift) For Wubi InputMethod---\n");
+	printf("==key press [Q] to exit==\n");
+	printf("\n");
+
+	if (!check_support_version()) {
+		printf("file(ChsIME.exe) not support.\n");
+		return -1;
+	}
 
 	if (!set_debug_privilege()) {
 		printf("admin privileges are required.\n");
@@ -190,7 +212,6 @@ int main()
 
 	win10_wubi_patch wubi_patch;
 	wubi_patch.RunThread();
-	printf("---Widows 10 Disable English Switch Key(Shift) For Wubi InputMethod---  =key press [Q] to exit=\n");
 	do {
 		if (read_key() == 'q') {
 			printf("exit\n");
