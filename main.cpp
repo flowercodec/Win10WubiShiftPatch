@@ -2,6 +2,7 @@
 
 #include <set>
 #include <vector>
+#include <map>
 #include <string>
 #include <iostream>
 #include <string>
@@ -89,6 +90,14 @@ static bool my_WriteProcessMemory(HANDLE h, uint64_t address, const uint8_t* byt
 
 static std::wstring s_target_process_name = L"ChsIME.exe";
 
+///< key = md5, value = address
+static std::map<std::string, uint64_t> s_support_files = {
+	{"b3448bf077665f2e1ca67094bcf2a7c5", 0x14DE1},
+	{"de5fa392a825332ab3e348ef0316b514", 0x16A61},
+};
+///< current file md5
+static std::string s_file_md5;
+
 class win10_wubi_patch
 {
 public:
@@ -155,7 +164,13 @@ private:
 			uint8_t patch_bytes[] = {
 				0x31, 0xC0
 			};
-			bOK = patch(0x14DE1, patch_bytes, sizeof(patch_bytes)); 
+
+			///< check again
+			if (s_support_files.find(s_file_md5) == s_support_files.end()) {
+				break;
+			}
+			uint64_t address = s_support_files[s_file_md5];
+			bOK = patch(address, patch_bytes, sizeof(patch_bytes)); 
 		} while (0);
 
 		if (hopen) {
@@ -178,16 +193,17 @@ bool check_support_version()
 	bool bSupport = false;
 	do 
 	{
-		std::string file_md5 = md5file(chs_ime_path.c_str());
-		if (file_md5.empty()) {
+		s_file_md5 = md5file(chs_ime_path.c_str());
+		if (s_file_md5.empty()) {
 			break;
 		}
 
-		file_md5 = lower_case(file_md5);
-		if (file_md5 == "b3448bf077665f2e1ca67094bcf2a7c5") {
-			bSupport = true;
+		s_file_md5 = lower_case(s_file_md5);
+		if (s_support_files.find(s_file_md5) == s_support_files.end()) {
+			break;
 		}
 
+		bSupport = true;
 	} while (0);
 	return bSupport;
 }
@@ -199,7 +215,8 @@ int main()
 	printf("\n");
 
 	if (!check_support_version()) {
-		printf("file(ChsIME.exe) not support.\n");
+		printf("file(ChsIME.exe) not support, need send ChsIME.exe to author.\n");
+		getchar();
 		return -1;
 	}
 
