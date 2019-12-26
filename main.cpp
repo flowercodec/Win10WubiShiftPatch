@@ -90,10 +90,11 @@ static bool my_WriteProcessMemory(HANDLE h, uint64_t address, const uint8_t* byt
 
 static std::wstring s_target_process_name = L"ChsIME.exe";
 
-///< key = md5, value = address
+///< key = md5, value = address	|  certutil -hashfile FILE MD5
 static std::map<std::string, uint64_t> s_support_files = {
 	{"b3448bf077665f2e1ca67094bcf2a7c5", 0x14DE1},
 	{"de5fa392a825332ab3e348ef0316b514", 0x16A61},
+	{"f653c99d4a0c61d4b2c64358b8213bd8", 0x15C11},
 };
 ///< current file md5
 static std::string s_file_md5;
