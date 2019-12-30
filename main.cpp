@@ -115,7 +115,27 @@ public:
 	}
 	void RunThread()
 	{
+		_start_time = GetTickCount();
 		_thread = std::thread(std::bind(&win10_wubi_patch::Execute, this));
+	}
+
+	bool CheckExit()
+	{
+		bool bExit = false;
+		do 
+		{
+			if (_patched_pids.size() <= 0) {
+				break;
+			}
+
+			///< wait 10 seconds
+			if (GetTickCount() - _start_time <= 10 * 1000) {
+				break;
+			}
+
+			bExit = true;
+		} while (0);
+		return bExit;
 	}
 protected:
 	virtual int32_t Execute(void)
@@ -185,6 +205,7 @@ private:
 	volatile bool _exit;
 	std::set<DWORD> _patched_pids;
 	std::thread _thread;
+	DWORD _start_time;
 };
 
 bool check_support_version()
@@ -209,10 +230,16 @@ bool check_support_version()
 	return bSupport;
 }
 
-int main()
+static void Usage()
+{
+	printf("if you want to exit when patch success, pass '--exit_when_patched' to launch command\n");
+}
+
+int main(int argc, char* argv[])
 {
 	printf("---Widows 10 Disable English Switch Key(Shift) For Wubi InputMethod---\n");
-	printf("==key press [Q] to exit==\n");
+	printf("key press [Q] to exit\n");
+	Usage();
 	printf("\n");
 
 	if (!check_support_version()) {
@@ -226,16 +253,33 @@ int main()
 		return -1;
 	}
 
+	bool exit_when_patched = false;
+	if (argc >= 2) {
+		std::string param1 = argv[1];
+		if (param1 == "--exit_when_patched") {
+			exit_when_patched = true;
+		}
+	}
+
 	term_init();
 
 	win10_wubi_patch wubi_patch;
 	wubi_patch.RunThread();
 	do {
 		if (read_key() == 'q') {
-			printf("exit\n");
+			printf("exit(user)\n");
 			sys_sleep(500);
 			break;
 		}
+
+		if (exit_when_patched) {
+			if (wubi_patch.CheckExit()) {
+				printf("exit(patched)\n");
+				sys_sleep(500);
+				break;
+			}
+		}
+
 		sys_sleep(10);
 	} while (1);
 
