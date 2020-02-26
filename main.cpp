@@ -17,6 +17,11 @@
 
 using namespace std;
 
+
+FILE* s_file_logger = NULL;
+#define  my_print(...)  {printf(__VA_ARGS__);if(s_file_logger){fprintf(s_file_logger, __VA_ARGS__);}; }
+
+
 static void sys_sleep(uint32_t nMilliseconds)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(nMilliseconds));
@@ -156,7 +161,7 @@ protected:
 					} else {
 						s_bok = "failed";
 					}
-					printf("-- do patch, pid = %d, times = %d, result = %s\n", pid, count, s_bok.c_str());
+					my_print("-- do patch, pid = %d, times = %d, result = %s\n", pid, count, s_bok.c_str());
 				}
 			}
 		}
@@ -232,24 +237,75 @@ bool check_support_version()
 
 static void Usage()
 {
-	printf("if you want to exit when patch success, pass '--exit_when_patched' to launch command\n");
+	my_print("if you want to exit when patch success, pass '--exit_when_patched' to launch command\n");
 }
+
+class file_keeper
+{
+public:
+	file_keeper()
+	{
+		_file = NULL;
+	}
+	~file_keeper()
+	{
+		Close();
+	}
+public:
+	bool Open(const std::string& filename)
+	{
+		Close();
+		bool bOK = false;
+		do 
+		{
+			FILE* file = fopen(filename.c_str(), "wb");
+			if (!file) {
+				break;
+			}
+
+			_file = file;
+			bOK = true;
+		} while (0);
+		return bOK;
+	}
+
+	FILE* GetFile()
+	{
+		return _file;
+	}
+
+	void Close()
+	{
+		if (_file) {
+			fclose(_file);
+			_file = NULL;
+		}
+	}
+private:
+	FILE* _file;
+};
 
 int main(int argc, char* argv[])
 {
-	printf("---Widows 10 Disable English Switch Key(Shift) For Wubi InputMethod---\n");
-	printf("key press [Q] to exit\n");
+	file_keeper logger;
+	std::string app_data = getenv("appdata");
+	app_data += "\\wubi_patch.log";
+	logger.Open(app_data);
+	s_file_logger = logger.GetFile();
+
+	my_print("---Widows 10 Disable English Switch Key(Shift) For Wubi InputMethod---\n");
+	my_print("key press [Q] to exit\n");
 	Usage();
-	printf("\n");
+	my_print("\n");
 
 	if (!check_support_version()) {
-		printf("file(ChsIME.exe) not support, need send ChsIME.exe to author.\n");
+		my_print("file(ChsIME.exe) not support, need send ChsIME.exe to author.\n");
 		getchar();
 		return -1;
 	}
 
 	if (!set_debug_privilege()) {
-		printf("admin privileges are required.\n");
+		my_print("admin privileges are required.\n");
 		return -1;
 	}
 
@@ -267,14 +323,14 @@ int main(int argc, char* argv[])
 	wubi_patch.RunThread();
 	do {
 		if (read_key() == 'q') {
-			printf("exit(user)\n");
+			my_print("exit(user)\n");
 			sys_sleep(500);
 			break;
 		}
 
 		if (exit_when_patched) {
 			if (wubi_patch.CheckExit()) {
-				printf("exit(patched)\n");
+				my_print("exit(patched)\n");
 				sys_sleep(500);
 				break;
 			}
