@@ -100,6 +100,7 @@ static std::map<std::string, uint64_t> s_support_files = {
 	{"b3448bf077665f2e1ca67094bcf2a7c5", 0x14DE1},
 	{"de5fa392a825332ab3e348ef0316b514", 0x16A61},
 	{"f653c99d4a0c61d4b2c64358b8213bd8", 0x15C11},
+	{"c8bc76c87563e78c9bc85ee9f4f96760", 0x15C11},
 };
 ///< current file md5
 static std::string s_file_md5;
