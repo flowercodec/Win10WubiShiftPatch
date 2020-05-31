@@ -1,5 +1,9 @@
 # Win10WubiShiftPatch
 
+**停止更新，原因如下：**
+1. Windows 10 2004 自带shfit禁用功能。
+2. QQ五笔优化了Win10 兼容性(2020.04.20)。
+
  “ Windows 10 禁用五笔输入 shift 切换” 解决方案  
 注：只对特定ChsIME.exe 文件才有效果。  
 
